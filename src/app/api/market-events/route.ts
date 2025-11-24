@@ -7,11 +7,15 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
 
+    console.log('BACKEND_URL:', BACKEND_URL);
+
     // Build backend URL with query params
     const backendUrl = new URL(`${BACKEND_URL}/api/market-events`);
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.set(key, value);
     });
+
+    console.log('Proxying to:', backendUrl.toString());
 
     const response = await fetch(backendUrl.toString(), {
       method: 'GET',
@@ -20,44 +24,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    console.log('Backend response status:', response.status);
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error proxying to backend:', error);
-
-    // Return mock data for development when backend is unavailable
-    const mockEvents = [
-      {
-        id: '1',
-        date: 'November 24 2025',
-        event: 'Federal Reserve Interest Rate Decision',
-        type: 'Fed',
-        description: 'FOMC meeting to decide on interest rate policy',
-        significance: 'High',
-        market_sentiment: 'Neutral',
-        citations: ['https://www.federalreserve.gov']
-      },
-      {
-        id: '2',
-        date: 'November 25 2025',
-        event: 'Thanksgiving Holiday',
-        type: 'Holiday',
-        description: 'US stock markets closed for Thanksgiving',
-        significance: 'Medium',
-        market_sentiment: 'Neutral',
-        citations: ['https://www.nyse.com/markets/hours-calendars']
-      }
-    ];
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        events: mockEvents,
-        total: mockEvents.length,
-        page: 1,
-        limit: 50
-      }
-    });
+    return NextResponse.json(
+      { success: false, error: `Failed to fetch market events: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { status: 500 }
+    );
   }
 }
 
@@ -77,15 +53,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error proxying to backend:', error);
-    // Return success for development when backend is unavailable
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: Date.now().toString(),
-        ...body,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    });
+    return NextResponse.json(
+      { success: false, error: 'Failed to create market event' },
+      { status: 500 }
+    );
   }
 }
