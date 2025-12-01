@@ -231,6 +231,36 @@ router.delete('/delete-all', async (req: Request, res: Response<ApiResponse<{ de
   }
 });
 
+// DELETE /api/market-events/clear-regenerate - Delete all events and regenerate for current week
+router.delete('/clear-regenerate', async (req: Request, res: Response<ApiResponse<any>>) => {
+  try {
+    // Step 1: Delete all existing events
+    const deletedCount = await marketEventsService.deleteAllEvents();
+    log(`Cleared ${deletedCount} old events`);
+
+    // Step 2: Generate fresh events for current week
+    const events = await aiService.generateWeeklyMarketEvents(); // Uses current week
+    const result = await marketEventsService.createEvents(events);
+
+    res.json({
+      success: true,
+      data: {
+        deleted: deletedCount,
+        generated: events.length,
+        created: result.created.length,
+        skipped: result.skipped,
+        events: result.created,
+      },
+    });
+  } catch (error) {
+    log('Error in clear-regenerate:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear and regenerate market events',
+    });
+  }
+});
+
 // DELETE /api/market-events/:id - Delete a market event
 router.delete('/:id', async (req: Request, res: Response<ApiResponse<{ deleted: boolean }>>) => {
   try {

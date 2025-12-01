@@ -73,9 +73,16 @@ export class SchedulerService {
 
   /**
    * Generate events for the upcoming week (next week)
+   * Also cleans up old events from previous weeks
    */
   async generateUpcomingWeekEvents(): Promise<void> {
     try {
+      log('Cleaning up old events before generating new ones...');
+
+      // Delete events older than 7 days (previous week's events)
+      const deletedCount = await this.marketEventsService.deleteOldEvents(7);
+      log(`Deleted ${deletedCount} old events`);
+
       log('Generating events for upcoming week...');
 
       const nextWeekStart = this.getNextWeekStart();
