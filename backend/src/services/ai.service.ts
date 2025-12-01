@@ -271,8 +271,11 @@ Generate 10-15 events based on your research findings. Focus on events with conf
                         normalizedType = 'Economic'; // Default fallback
                     }
 
+                    // Normalize date format: remove commas and ensure consistent "Month Day Year" format
+                    const normalizedDate = event.date.replace(/,/g, '').trim();
+
                     validEvents.push({
-                        date: event.date,
+                        date: normalizedDate,
                         event: event.event,
                         type: normalizedType,
                         description: event.description,
